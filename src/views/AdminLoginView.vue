@@ -11,7 +11,7 @@ const toast = useToastStore()
 const route = useRoute()
 const router = useRouter()
 
-const email = ref('')
+const usuario = ref('')
 const senha = ref('')
 const mostrarSenha = ref(false)
 const enviando = ref(false)
@@ -26,7 +26,7 @@ const destino = computed(() => {
 })
 
 function preencherDemo() {
-  email.value = DEMO_ADMIN.email
+  usuario.value = DEMO_ADMIN.email
   senha.value = DEMO_ADMIN.senha
   erro.value = ''
 }
@@ -35,14 +35,14 @@ async function entrar() {
   if (enviando.value) return
   erro.value = ''
 
-  if (!email.value.trim() || !senha.value) {
-    erro.value = 'Informe e-mail e senha.'
+  if (!usuario.value.trim() || !senha.value) {
+    erro.value = 'Informe o usuário e a senha.'
     return
   }
 
   enviando.value = true
   try {
-    await auth.login(email.value, senha.value)
+    await auth.login(usuario.value, senha.value)
     toast.sucesso('Acesso liberado.')
     router.replace(destino.value)
   } catch (falha) {
@@ -90,13 +90,15 @@ onMounted(() => {
 
       <form class="login-form" @submit.prevent="entrar">
         <div class="field">
-          <label for="login-email">E-mail</label>
+          <label for="login-usuario">Usuário</label>
           <input
-            id="login-email"
-            v-model="email"
-            type="email"
+            id="login-usuario"
+            v-model="usuario"
+            type="text"
             autocomplete="username"
-            placeholder="admin@escola.com"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="admin"
           />
         </div>
 

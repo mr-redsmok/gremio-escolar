@@ -49,9 +49,16 @@ async function registrarAuditoria(eleicaoId, acao, detalhes = {}) {
 /* Autenticação                                                               */
 /* -------------------------------------------------------------------------- */
 
-export async function login(email, senha) {
+const DOMINIO_USUARIOS = '@urna-escolar.com'
+
+function emailDoUsuario(usuario) {
+  const texto = String(usuario ?? '').trim().toLowerCase()
+  return texto.includes('@') ? texto : `${texto}${DOMINIO_USUARIOS}`
+}
+
+export async function login(usuario, senha) {
   const { data, error } = await client().auth.signInWithPassword({
-    email: String(email ?? '').trim(),
+    email: emailDoUsuario(usuario),
     password: String(senha ?? '')
   })
   if (error) falhar(error)
@@ -155,21 +162,10 @@ export async function getEstadoPublico() {
 /* -------------------------------------------------------------------------- */
 
 export async function salvarEleicao(eleicaoId, patch) {
-  const { data, error } = await client()
-    .from('urna_eleicoes')
-    .update(patch)
-    .eq('id', eleicaoId)
-    .select()
-    .single()
-
-  if (error) falhar(error)
-
-  await registrarAuditoria(eleicaoId, 'configuracao_atualizada', {
-    escola_nome: data.escola_nome,
-    nome: data.nome
+  return rpc('urna_salvar_eleicao', {
+    p_eleicao_id: eleicaoId,
+    p_patch: patch
   })
-
-  return data
 }
 
 export async function criarCargo(dados) {
