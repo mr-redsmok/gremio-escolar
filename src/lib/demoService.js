@@ -669,6 +669,29 @@ export async function reabrirEleicao(_eleicaoId, motivo = '') {
   return { ok: true, eleicao_id: eleicao.id }
 }
 
+export async function excluirEleicao(eleicaoId) {
+  exigirAdmin()
+  const estado = carregarEstado()
+  const eleicao = estado.eleicoes.find((e) => e.id === eleicaoId)
+
+  if (!eleicao) throw new Error('Eleição não encontrada.')
+  if (eleicao.status === 'aberta') {
+    throw new Error('Não é possível apagar uma eleição aberta. Encerre a votação antes.')
+  }
+
+  const daEleicao = (item) => item.eleicao_id !== eleicaoId
+  estado.eleicoes = estado.eleicoes.filter((e) => e.id !== eleicaoId)
+  estado.cargos = estado.cargos.filter(daEleicao)
+  estado.candidatos = estado.candidatos.filter(daEleicao)
+  estado.sessoes = estado.sessoes.filter(daEleicao)
+  estado.presencas = estado.presencas.filter(daEleicao)
+  estado.votos = estado.votos.filter(daEleicao)
+  estado.relatorios = estado.relatorios.filter(daEleicao)
+  estado.auditoria = estado.auditoria.filter(daEleicao)
+  persistir()
+  return { ok: true }
+}
+
 export async function novaEleicao({ escola_nome, nome, data_eleicao }) {
   exigirAdmin()
   const estado = carregarEstado()

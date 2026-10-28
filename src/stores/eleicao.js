@@ -146,6 +146,12 @@ export const useEleicaoStore = defineStore('eleicao', {
       await this.recarregar()
       return resultado
     },
+    async excluir() {
+      if (!this.eleicao) throw new Error('Nenhuma eleição configurada.')
+      const resultado = await service.excluirEleicao(this.eleicao.id)
+      await this.carregar(true)
+      return resultado
+    },
     async nova(dados) {
       const resultado = await service.novaEleicao(dados)
       await this.recarregar()

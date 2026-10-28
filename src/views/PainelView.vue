@@ -280,6 +280,27 @@ async function gerarBoletim(parcial) {
   }
 }
 
+async function apagarEleicao() {
+  if (!eleicao.eleicao || status.value === 'aberta') return
+  const confirmado = await confirm.abrir({
+    titulo: 'Apagar esta eleição?',
+    texto:
+      'Os cargos, candidatos, votos, presenças, relatórios e registros de auditoria desta eleição serão apagados. Esta ação não pode ser desfeita.',
+    confirmLabel: 'Apagar eleição',
+    cancelLabel: 'Cancelar',
+    perigo: true
+  })
+  if (!confirmado) return
+
+  try {
+    await eleicao.excluir()
+    toast.sucesso('Eleição apagada.')
+    await carregarTudo()
+  } catch (erro) {
+    toast.erro(erro.message)
+  }
+}
+
 async function gerarAta() {
   if (!eleicao.eleicao || gerando.value) return
   gerando.value = 'ata'
@@ -308,6 +329,15 @@ onMounted(carregarTudo)
       <button class="btn btn-ghost" type="button" @click="atualizar">
         <Icone nome="atualizar" :tamanho="17" />
         Atualizar
+      </button>
+      <button
+        v-if="eleicao.eleicao && status !== 'aberta'"
+        class="btn btn-danger"
+        type="button"
+        @click="apagarEleicao"
+      >
+        <Icone nome="lixo" :tamanho="17" />
+        Apagar eleição
       </button>
       <button
         v-if="eleicao.eleicao"

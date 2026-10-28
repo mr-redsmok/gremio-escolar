@@ -344,6 +344,23 @@ export async function reabrirEleicao(eleicaoId, motivo = '') {
   })
 }
 
+export async function excluirEleicao(eleicaoId) {
+  const { data: relatorios, error } = await client()
+    .from('urna_relatorios')
+    .select('storage_path')
+    .eq('eleicao_id', eleicaoId)
+
+  if (error) falhar(error)
+
+  const caminhos = (relatorios || []).map((r) => r.storage_path).filter(Boolean)
+  if (caminhos.length) {
+    const remocao = await client().storage.from('urna-relatorios').remove(caminhos)
+    if (remocao.error) falhar(remocao.error)
+  }
+
+  return rpc('urna_excluir_eleicao', { p_eleicao_id: eleicaoId })
+}
+
 export async function novaEleicao({ escola_nome, nome, data_eleicao }) {
   return rpc('urna_nova_eleicao', {
     p_escola_nome: escola_nome,

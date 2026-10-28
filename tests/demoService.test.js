@@ -75,6 +75,26 @@ describe('serviço local de demonstração', () => {
     expect(evento.detalhes.motivo).toBe('Reabertura de teste')
   })
 
+  it('não apaga uma eleição aberta e apaga todos os dados de uma eleição encerrada', async () => {
+    const publico = await demo.getEstadoPublico()
+    const eleitor = await demo.liberarEleitor(publico.eleicao.id, 'Ana', '')
+    await demo.registrarVoto(eleitor.token, [
+      { cargo_id: publico.cargos[0].id, tipo: 'branco', candidato_id: null },
+      { cargo_id: publico.cargos[1].id, tipo: 'branco', candidato_id: null }
+    ])
+
+    await expect(demo.excluirEleicao(publico.eleicao.id)).rejects.toThrow('aberta')
+
+    await demo.encerrarEleicao(publico.eleicao.id)
+    await demo.excluirEleicao(publico.eleicao.id)
+
+    const dados = await demo.getAdminData()
+    expect(dados.eleicao).toBeNull()
+    expect(dados.cargos).toEqual([])
+    expect(await demo.listarPresencas(publico.eleicao.id)).toEqual([])
+    expect(await demo.listarAuditoria(publico.eleicao.id)).toEqual([])
+  })
+
   it('salva a configuração da eleição em rascunho', async () => {
     const eleicao = await criarRascunho()
 
