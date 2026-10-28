@@ -17,7 +17,6 @@ const confirm = useConfirmStore()
 const router = useRouter()
 
 const nome = ref('')
-const turma = ref('')
 const etapa = ref('form')
 const erros = ref({})
 const erro = ref('')
@@ -43,11 +42,10 @@ async function atualizar() {
 }
 
 function avancar() {
-  const resultado = validarIdentificacao(nome.value, turma.value)
+  const resultado = validarIdentificacao(nome.value)
   erros.value = resultado.erros
   if (!resultado.ok) return
   nome.value = resultado.nome
-  turma.value = resultado.turma
   erro.value = ''
   etapa.value = 'confirmar'
 }
@@ -62,7 +60,7 @@ async function confirmar() {
   carregando.value = true
   erro.value = ''
   try {
-    await urn.iniciar(nome.value, turma.value)
+    await urn.iniciar(nome.value)
     router.push({ name: 'votar' })
   } catch (falha) {
     erro.value = falha.message
@@ -89,7 +87,6 @@ async function cancelarSessao() {
   await urn.cancelar()
   etapa.value = 'form'
   nome.value = ''
-  turma.value = ''
   erros.value = {}
   erro.value = ''
 }
@@ -138,7 +135,7 @@ onUnmounted(() => {
             <span>1</span>
             <div>
               <strong>Identifique-se</strong>
-              <small>Informe seu nome completo e sua turma.</small>
+              <small>Informe seu primeiro nome.</small>
             </div>
           </li>
           <li>
@@ -224,8 +221,7 @@ onUnmounted(() => {
           <h2>Votação em andamento</h2>
           <p>
             Há uma sessão aberta para
-            <strong>{{ urn.sessao?.nome }}</strong>
-            <span v-if="urn.sessao?.turma"> · turma {{ urn.sessao.turma }}</span>.
+            <strong>{{ urn.sessao?.nome }}</strong>.
           </p>
           <p class="standby-status-ajuda">
             Se você é esse eleitor, continue. Caso contrário, cancele a sessão e
@@ -254,10 +250,6 @@ onUnmounted(() => {
             <div>
               <dt>Nome</dt>
               <dd>{{ nome }}</dd>
-            </div>
-            <div>
-              <dt>Turma</dt>
-              <dd>{{ turma }}</dd>
             </div>
           </dl>
 
@@ -290,37 +282,24 @@ onUnmounted(() => {
             <span class="standby-form-kicker">Identificação do eleitor</span>
             <h2>Vamos começar</h2>
             <p>
-              Digite seu nome completo e sua turma. Não existe lista prévia de
-              eleitores; o sistema confere o comparecimento pelo nome e turma.
+              Digite seu primeiro nome. Não existe lista prévia de eleitores; o
+              sistema confere o comparecimento pelo nome.
             </p>
           </div>
 
           <form class="standby-form" @submit.prevent="avancar">
             <div class="field">
-              <label for="eleitor-nome">Nome completo</label>
+              <label for="eleitor-nome">Primeiro nome</label>
               <input
                 id="eleitor-nome"
                 v-model="nome"
                 type="text"
-                autocomplete="name"
-                maxlength="120"
-                placeholder="Ex.: Maria Fernanda Silva"
+                autocomplete="given-name"
+                maxlength="60"
+                placeholder="Ex.: Maria"
                 autofocus
               />
               <small v-if="erros.nome" class="field-error">{{ erros.nome }}</small>
-            </div>
-
-            <div class="field">
-              <label for="eleitor-turma">Turma</label>
-              <input
-                id="eleitor-turma"
-                v-model="turma"
-                type="text"
-                autocomplete="off"
-                maxlength="30"
-                placeholder="Ex.: 9º A"
-              />
-              <small v-if="erros.turma" class="field-error">{{ erros.turma }}</small>
             </div>
 
             <div v-if="erro" class="alert alert-erro" role="alert">{{ erro }}</div>

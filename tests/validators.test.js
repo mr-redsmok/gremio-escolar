@@ -119,23 +119,22 @@ describe('validação de candidatos', () => {
 })
 
 describe('validação da identificação do eleitor', () => {
-  it('normaliza espaços e devolve os dados para exibição', () => {
-    const resultado = validarIdentificacao('  Maria   Fernanda ', ' 9º  A ')
+  it('normaliza espaços e aceita somente o primeiro nome', () => {
+    const resultado = validarIdentificacao('  Maria   ')
 
     expect(resultado.ok).toBe(true)
-    expect(resultado.nome).toBe('Maria Fernanda')
-    expect(resultado.turma).toBe('9º A')
+    expect(resultado.nome).toBe('Maria')
   })
 
-  it('exige nome e sobrenome', () => {
-    const resultado = validarIdentificacao('Maria', '9º A')
+  it('exige o primeiro nome', () => {
+    const resultado = validarIdentificacao('   ')
     expect(resultado.ok).toBe(false)
-    expect(resultado.erros.nome).toContain('nome e sobrenome')
+    expect(resultado.erros.nome).toContain('primeiro nome')
   })
 
-  it('exige turma', () => {
-    const resultado = validarIdentificacao('Maria Fernanda', ' ')
+  it('rejeita um nome de uma letra', () => {
+    const resultado = validarIdentificacao('M')
     expect(resultado.ok).toBe(false)
-    expect(resultado.erros.turma).toBeTruthy()
+    expect(resultado.erros.nome).toBeTruthy()
   })
 })

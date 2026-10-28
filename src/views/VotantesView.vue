@@ -179,7 +179,7 @@ onMounted(async () => {
               <tr v-for="(presenca, indice) in filtradas" :key="presenca.id">
                 <td class="num tabela-mudo">{{ indice + 1 }}</td>
                 <td><strong>{{ presenca.nome_eleitor }}</strong></td>
-                <td>{{ presenca.turma }}</td>
+                <td>{{ presenca.turma || '—' }}</td>
                 <td>{{ formatarDataHora(presenca.votou_em) }}</td>
               </tr>
             </tbody>

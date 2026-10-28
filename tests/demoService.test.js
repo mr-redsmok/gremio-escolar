@@ -23,11 +23,7 @@ describe('serviço local de demonstração', () => {
 
   it('registra todos os cargos e o comparecimento sem permitir novo voto', async () => {
     const publico = await demo.getEstadoPublico()
-    const eleitor = await demo.liberarEleitor(
-      publico.eleicao.id,
-      'João D’Ávila',
-      '9º A'
-    )
+    const eleitor = await demo.liberarEleitor(publico.eleicao.id, 'João', '')
     const votos = publico.cargos.map((cargo, indice) =>
       indice === 0
         ? {
@@ -52,11 +48,11 @@ describe('serviço local de demonstração', () => {
 
     const presencas = await demo.listarPresencas(publico.eleicao.id)
     expect(presencas).toHaveLength(1)
-    expect(presencas[0].nome_eleitor).toBe('João D’Ávila')
+    expect(presencas[0].nome_eleitor).toBe('João')
 
     await expect(
-      demo.liberarEleitor(publico.eleicao.id, 'joão d’ávila', '9A')
-    ).rejects.toThrow('já votaram')
+      demo.liberarEleitor(publico.eleicao.id, 'joao', '')
+    ).rejects.toThrow('já votou')
   })
 
   it('distingue apuração parcial de apuração oficial', async () => {

@@ -21,24 +21,21 @@ describe('identificação na tela da urna', () => {
     push.mockReset()
   })
 
-  it('mostra os erros de validação e avança com os dados normalizados', async () => {
+  it('mostra o erro quando o nome está vazio e avança com o primeiro nome', async () => {
     const wrapper = mount(UrnaView)
     await flushPromises()
 
-    await wrapper.find('#eleitor-nome').setValue('Maria')
-    await wrapper.find('#eleitor-turma').setValue('9º A')
     await wrapper.find('form.standby-form').trigger('submit')
 
-    expect(wrapper.find('.field-error').text()).toContain('nome e sobrenome')
+    expect(wrapper.find('.field-error').text()).toContain('primeiro nome')
     expect(wrapper.text()).toContain('Vamos começar')
 
-    await wrapper.find('#eleitor-nome').setValue('  Maria   Fernanda ')
-    await wrapper.find('#eleitor-turma').setValue(' 9º  A ')
+    await wrapper.find('#eleitor-nome').setValue('  Maria  ')
     await wrapper.find('form.standby-form').trigger('submit')
 
     expect(wrapper.text()).toContain('Confirme seus dados')
-    expect(wrapper.find('.confirmacao-dados').text()).toContain('Maria Fernanda')
-    expect(wrapper.find('.confirmacao-dados').text()).toContain('9º A')
+    expect(wrapper.find('.confirmacao-dados').text()).toContain('Maria')
+    expect(wrapper.find('#eleitor-turma').exists()).toBe(false)
 
     wrapper.unmount()
   })

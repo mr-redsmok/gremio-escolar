@@ -1,4 +1,4 @@
-import { nomeExibicao, turmaExibicao } from './normalizar.js'
+import { nomeExibicao } from './normalizar.js'
 
 function texto(valor) {
   return String(valor ?? '').trim()
@@ -94,27 +94,19 @@ export function validarCandidato(dados = {}, cargo = null, candidatos = [], idAt
   return { ok: Object.keys(erros).length === 0, erros }
 }
 
-export function validarIdentificacao(nome, turma) {
+export function validarIdentificacao(nome) {
   const erros = {}
   const nomeLimpo = nomeExibicao(nome)
-  const turmaLimpa = turmaExibicao(turma)
 
   if (!nomeLimpo) {
-    erros.nome = 'Digite seu nome completo.'
-  } else if (nomeLimpo.split(/\s+/).length < 2) {
-    erros.nome = 'Digite seu nome completo (nome e sobrenome).'
-  } else if (nomeLimpo.length < 5) {
+    erros.nome = 'Digite seu primeiro nome.'
+  } else if (nomeLimpo.length < 2) {
     erros.nome = 'O nome informado é muito curto.'
-  }
-
-  if (!turmaLimpa) {
-    erros.turma = 'Digite sua turma.'
   }
 
   return {
     ok: Object.keys(erros).length === 0,
     erros,
-    nome: nomeLimpo,
-    turma: turmaLimpa
+    nome: nomeLimpo
   }
 }

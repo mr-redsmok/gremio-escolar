@@ -67,13 +67,13 @@ export const useUrnaStore = defineStore('urna', {
         this.carregando = false
       }
     },
-    async iniciar(nome, turma) {
+    async iniciar(nome) {
       if (!this.eleicao) throw new Error('Nenhuma eleição disponível.')
       if (this.eleicao.status !== 'aberta') {
         throw new Error('A votação não está aberta.')
       }
 
-      const resposta = await service.liberarEleitor(this.eleicao.id, nome, turma)
+      const resposta = await service.liberarEleitor(this.eleicao.id, nome, '')
       this.sessao = {
         ...resposta,
         eleicao_id: this.eleicao.id

@@ -287,7 +287,6 @@ onUnmounted(() => {
         <div class="votacao-eleitor">
           <span class="votacao-eleitor-rotulo">Eleitor</span>
           <strong>{{ urn.sessao?.nome }}</strong>
-          <small>Turma {{ urn.sessao?.turma }}</small>
         </div>
         <div
           v-if="restante != null"

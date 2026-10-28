@@ -732,8 +732,7 @@ export async function liberarEleitor(eleicaoId, nome, turma) {
   const nomeNorm = normalizarNome(nomeLimpo)
   const turmaNorm = normalizarTurma(turmaLimpa)
 
-  if (nomeNorm.length < 3) throw new Error('Digite seu nome completo.')
-  if (!turmaNorm) throw new Error('Digite sua turma.')
+  if (nomeNorm.length < 2) throw new Error('Digite seu primeiro nome.')
 
   const jaVotou = estado.presencas.some(
     (p) =>
@@ -742,7 +741,7 @@ export async function liberarEleitor(eleicaoId, nome, turma) {
       p.turma_normalizada === turmaNorm
   )
   if (jaVotou) {
-    throw new Error('Este nome e turma já votaram nesta eleição.')
+    throw new Error('Este nome já votou nesta eleição.')
   }
 
   const agoraMs = Date.now()
