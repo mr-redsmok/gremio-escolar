@@ -247,6 +247,7 @@ export async function getEstadoPublico() {
     descricao: eleicao.descricao,
     data_eleicao: eleicao.data_eleicao,
     status: eleicao.status,
+    pausada: Boolean(eleicao.pausada),
     digitos_padrao: eleicao.digitos_padrao,
     som_ativo: eleicao.som_ativo,
     tempo_inatividade_segundos: eleicao.tempo_inatividade_segundos
@@ -631,6 +632,52 @@ export async function abrirEleicao(_eleicaoId) {
   return { ok: true, eleicao_id: eleicao.id }
 }
 
+export async function pausarEleicao(_eleicaoId, motivo = '') {
+  exigirAdmin()
+  const estado = carregarEstado()
+  const eleicao = exigirEleicaoAtual(estado)
+
+  if (eleicao.status !== 'aberta') {
+    throw new Error('Somente eleições abertas podem ser pausadas.')
+  }
+  if (eleicao.pausada) throw new Error('A votação já está pausada.')
+
+  eleicao.pausada = true
+  eleicao.pausa_em = agora()
+  eleicao.motivo_pausa = String(motivo ?? '').trim() || null
+  eleicao.atualizado_em = agora()
+  registrarAuditoria(estado, eleicao.id, 'eleicao_pausada', {
+    motivo: eleicao.motivo_pausa
+  })
+  persistir()
+  return { ok: true, pausa_em: eleicao.pausa_em }
+}
+
+export async function retomarEleicao(_eleicaoId) {
+  exigirAdmin()
+  const estado = carregarEstado()
+  const eleicao = exigirEleicaoAtual(estado)
+
+  if (!eleicao.pausada) throw new Error('A votação não está pausada.')
+
+  const pausaMs = Date.now() - new Date(eleicao.pausa_em).getTime()
+  estado.sessoes.forEach((s) => {
+    if (s.eleicao_id === eleicao.id && s.status === 'ativa') {
+      s.expira_em = new Date(new Date(s.expira_em).getTime() + pausaMs).toISOString()
+    }
+  })
+
+  eleicao.pausada = false
+  eleicao.pausa_em = null
+  eleicao.motivo_pausa = null
+  eleicao.atualizado_em = agora()
+  registrarAuditoria(estado, eleicao.id, 'eleicao_retomada', {
+    pausa_segundos: Math.round(pausaMs / 1000)
+  })
+  persistir()
+  return { ok: true, eleicao_id: eleicao.id }
+}
+
 export async function encerrarEleicao(_eleicaoId) {
   exigirAdmin()
   const estado = carregarEstado()
@@ -642,6 +689,9 @@ export async function encerrarEleicao(_eleicaoId) {
 
   eleicao.status = 'encerrada'
   eleicao.encerramento_em = agora()
+  eleicao.pausada = false
+  eleicao.pausa_em = null
+  eleicao.motivo_pausa = null
   eleicao.atualizado_em = agora()
   registrarAuditoria(estado, eleicao.id, 'eleicao_encerrada', {
     encerramento_em: eleicao.encerramento_em
@@ -749,6 +799,9 @@ export async function liberarEleitor(eleicaoId) {
     (e) => e.id === eleicaoId && e.status === 'aberta'
   )
   if (!eleicao) throw new Error('A votação não está aberta.')
+  if (eleicao.pausada) {
+    throw new Error('A votação está pausada. Aguarde a retomada pelo responsável.')
+  }
 
   const expiraEm = new Date(
     Date.now() + (Number(eleicao.tempo_inatividade_segundos) + 60) * 1000
@@ -791,16 +844,16 @@ export async function registrarVoto(token, votos) {
   if (sessao.status !== 'ativa') {
     throw new Error('Sessão de votação expirada ou cancelada.')
   }
-  if (new Date(sessao.expira_em).getTime() <= Date.now()) {
-    sessao.status = 'expirada'
-    persistir()
-    throw new Error('Sessão de votação expirada. Reinicie a votação.')
-  }
-
   const eleicao = estado.eleicoes.find(
     (e) => e.id === sessao.eleicao_id && e.status === 'aberta'
   )
   if (!eleicao) throw new Error('A votação não está aberta.')
+
+  if (new Date(sessao.expira_em).getTime() <= Date.now() && !eleicao.pausada) {
+    sessao.status = 'expirada'
+    persistir()
+    throw new Error('Sessão de votação expirada. Reinicie a votação.')
+  }
 
   validarVotosDaEleicao(estado, eleicao, votos)
 

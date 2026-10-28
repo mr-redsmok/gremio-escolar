@@ -11,13 +11,13 @@ import {
   votarBranco
 } from '@/lib/urnaMachine.js'
 
-function lerSessaoPersistida() {
+function lerSessaoPersistida(ignorarExpiracao = false) {
   try {
     const bruto = sessionStorage.getItem(STORAGE.sessao)
     if (!bruto) return null
     const sessao = JSON.parse(bruto)
     if (!sessao?.token || !sessao?.expira_em) return null
-    if (new Date(sessao.expira_em).getTime() <= Date.now()) {
+    if (!ignorarExpiracao && new Date(sessao.expira_em).getTime() <= Date.now()) {
       sessionStorage.removeItem(STORAGE.sessao)
       return null
     }
@@ -50,7 +50,10 @@ export const useUrnaStore = defineStore('urna', {
     totalCargos: (state) => (state.estadoPublico.cargos || []).length,
     numeroCargo: (state) => Math.min(state.estado.indice + 1, state.estadoPublico.cargos?.length || 1),
     eleicaoAberta: (state) => state.estadoPublico.eleicao?.status === 'aberta',
-    temSessao: (state) => Boolean(state.sessao?.token)
+    temSessao: (state) => Boolean(state.sessao?.token),
+    eleicaoPausada: (state) =>
+      state.estadoPublico.eleicao?.status === 'aberta' &&
+      Boolean(state.estadoPublico.eleicao?.pausada)
   },
   actions: {
     async carregar() {
@@ -86,7 +89,7 @@ export const useUrnaStore = defineStore('urna', {
       return this.sessao
     },
     restaurarSessao() {
-      const sessao = lerSessaoPersistida()
+      const sessao = lerSessaoPersistida(Boolean(this.eleicao?.pausada))
       if (!sessao) return false
       if (this.eleicao?.id && sessao.eleicao_id && sessao.eleicao_id !== this.eleicao.id) {
         this.limparSessao()

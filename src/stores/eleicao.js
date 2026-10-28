@@ -134,6 +134,18 @@ export const useEleicaoStore = defineStore('eleicao', {
       await this.recarregar()
       return resultado
     },
+    async pausar(motivo = '') {
+      if (!this.eleicao) throw new Error('Nenhuma eleição configurada.')
+      const resultado = await service.pausarEleicao(this.eleicao.id, motivo)
+      await this.recarregar()
+      return resultado
+    },
+    async retomar() {
+      if (!this.eleicao) throw new Error('Nenhuma eleição configurada.')
+      const resultado = await service.retomarEleicao(this.eleicao.id)
+      await this.recarregar()
+      return resultado
+    },
     async encerrar() {
       if (!this.eleicao) throw new Error('Nenhuma eleição configurada.')
       const resultado = await service.encerrarEleicao(this.eleicao.id)

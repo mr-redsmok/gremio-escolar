@@ -280,6 +280,37 @@ async function gerarBoletim(parcial) {
   }
 }
 
+async function pausarVotacao() {
+  if (!eleicao.eleicao || status.value !== 'aberta') return
+  const confirmado = await confirm.abrir({
+    titulo: 'Pausar a votação?',
+    texto:
+      'Ninguém poderá iniciar uma nova votação até a retomada. Quem já começou a votar poderá concluir o voto.',
+    confirmLabel: 'Pausar votação',
+    cancelLabel: 'Voltar',
+    perigo: true
+  })
+  if (!confirmado) return
+
+  try {
+    await eleicao.pausar()
+    toast.sucesso('Votação pausada.')
+    await carregarTudo()
+  } catch (erro) {
+    toast.erro(erro.message)
+  }
+}
+
+async function retomarVotacao() {
+  try {
+    await eleicao.retomar()
+    toast.sucesso('Votação retomada.')
+    await carregarTudo()
+  } catch (erro) {
+    toast.erro(erro.message)
+  }
+}
+
 async function apagarEleicao() {
   if (!eleicao.eleicao || status.value === 'aberta') return
   const confirmado = await confirm.abrir({
@@ -329,6 +360,24 @@ onMounted(carregarTudo)
       <button class="btn btn-ghost" type="button" @click="atualizar">
         <Icone nome="atualizar" :tamanho="17" />
         Atualizar
+      </button>
+      <button
+        v-if="status === 'aberta' && !eleicao.eleicao?.pausada"
+        class="btn btn-ghost"
+        type="button"
+        @click="pausarVotacao"
+      >
+        <Icone nome="relogio" :tamanho="17" />
+        Pausar votação
+      </button>
+      <button
+        v-if="status === 'aberta' && eleicao.eleicao?.pausada"
+        class="btn btn-primary"
+        type="button"
+        @click="retomarVotacao"
+      >
+        <Icone nome="play" :tamanho="17" />
+        Retomar votação
       </button>
       <button
         v-if="eleicao.eleicao && status !== 'aberta'"
@@ -400,6 +449,9 @@ onMounted(carregarTudo)
         <div class="painel-hero-conteudo">
           <div class="painel-hero-topo">
             <StatusBadge :status="status" />
+            <span v-if="eleicao.eleicao?.pausada" class="badge status-rascunho">
+              Votação pausada
+            </span>
             <span class="painel-hero-data">
               <Icone nome="relogio" :tamanho="15" />
               {{ dataEleicao }}

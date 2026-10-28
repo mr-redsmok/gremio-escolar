@@ -107,6 +107,31 @@ describe('serviço local de demonstração', () => {
     expect(await demo.listarAuditoria(publico.eleicao.id)).toEqual([])
   })
 
+  it('pausa sem derrubar a votação em andamento e impede novas votações até a retomada', async () => {
+    const publico = await demo.getEstadoPublico()
+    const id = publico.eleicao.id
+    const branco = publico.cargos.map((cargo) => ({ cargo_id: cargo.id, tipo: 'branco', candidato_id: null }))
+
+    const emAndamento = await demo.liberarEleitor(id, '', '')
+    await demo.pausarEleicao(id, 'Teste de pausa')
+
+    expect((await demo.getEstadoPublico()).eleicao.pausada).toBe(true)
+    await expect(demo.pausarEleicao(id)).rejects.toThrow('já está pausada')
+    await expect(demo.liberarEleitor(id, '', '')).rejects.toThrow('pausada')
+
+    const registro = await demo.registrarVoto(emAndamento.token, branco)
+    expect(registro.protocolo).toBeTruthy()
+
+    await demo.retomarEleicao(id)
+    await expect(demo.retomarEleicao(id)).rejects.toThrow('não está pausada')
+    expect((await demo.getEstadoPublico()).eleicao.pausada).toBe(false)
+
+    const depois = await demo.liberarEleitor(id, '', '')
+    expect(depois.token).toBeTruthy()
+    const apuracao = await demo.apurar(id, true)
+    expect(apuracao.total_votantes).toBe(1)
+  })
+
   it('salva a configuração da eleição em rascunho', async () => {
     const eleicao = await criarRascunho()
 

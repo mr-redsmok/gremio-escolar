@@ -30,6 +30,7 @@ const carregando = ref(true)
 let timerOverlay = null
 let timerFim = null
 let timerContador = null
+let timerPausa = null
 
 const cargo = computed(() => urn.cargoAtual)
 const finalizando = computed(() => urn.estado.etapa === 'fim')
@@ -39,6 +40,8 @@ const segundosInatividade = computed(
 )
 
 function limparTimers() {
+  if (timerPausa) window.clearInterval(timerPausa)
+  timerPausa = null
   if (timerOverlay) window.clearTimeout(timerOverlay)
   if (timerFim) window.clearTimeout(timerFim)
   if (timerContador) window.clearInterval(timerContador)
@@ -54,7 +57,7 @@ function pararContador() {
 }
 
 function tic() {
-  if (overlay.value || finalizando.value || urn.processando) return
+  if (overlay.value || finalizando.value || urn.processando || urn.eleicaoPausada) return
   if (restante.value == null) return
   restante.value -= 1
   if (restante.value <= 0) {
@@ -219,6 +222,7 @@ function antesDeSair(event) {
 
 onMounted(async () => {
   await urn.carregar()
+  timerPausa = window.setInterval(() => urn.carregar(), 10000)
 
   if (!urn.temSessao) {
     const restaurou = urn.restaurarSessao()
@@ -264,6 +268,14 @@ onUnmounted(() => {
   </div>
 
   <div v-else class="votacao">
+    <div v-if="urn.eleicaoPausada" class="alert alert-aviso votacao-pausa">
+      <Icone nome="relogio" :tamanho="18" />
+      <span>
+        Votação pausada pelo responsável. O tempo está parado e a sua cédula continua
+        salva. Você pode concluir o voto quando a votação for retomada.
+      </span>
+    </div>
+
     <div class="votacao-cabecalho">
       <div class="votacao-cargo">
         <span class="votacao-kicker">

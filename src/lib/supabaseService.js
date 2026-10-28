@@ -333,6 +333,17 @@ export async function abrirEleicao(eleicaoId) {
   return rpc('urna_abrir_eleicao', { p_eleicao_id: eleicaoId })
 }
 
+export async function pausarEleicao(eleicaoId, motivo = '') {
+  return rpc('urna_pausar_eleicao', {
+    p_eleicao_id: eleicaoId,
+    p_motivo: String(motivo ?? '').trim() || null
+  })
+}
+
+export async function retomarEleicao(eleicaoId) {
+  return rpc('urna_retomar_eleicao', { p_eleicao_id: eleicaoId })
+}
+
 export async function encerrarEleicao(eleicaoId) {
   return rpc('urna_encerrar_eleicao', { p_eleicao_id: eleicaoId })
 }

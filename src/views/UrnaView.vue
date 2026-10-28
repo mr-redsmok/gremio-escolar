@@ -215,6 +215,21 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <div v-else-if="urn.eleicaoPausada" class="standby-status">
+          <div class="standby-status-icone neutro">
+            <Icone nome="relogio" :tamanho="28" />
+          </div>
+          <h2>Votação pausada</h2>
+          <p>A votação foi pausada temporariamente pelo responsável. Aguarde a retomada.</p>
+          <p class="standby-status-ajuda">
+            Quem já iniciou a votação poderá concluí-la quando a urna for liberada.
+          </p>
+          <button class="btn btn-ghost" type="button" @click="atualizar">
+            <Icone nome="atualizar" :tamanho="16" />
+            Atualizar
+          </button>
+        </div>
+
         <div v-else class="standby-form-wrap">
           <div class="standby-form-topo">
             <span class="standby-form-kicker">Votação</span>
