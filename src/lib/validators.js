@@ -1,5 +1,3 @@
-import { nomeExibicao } from './normalizar.js'
-
 function texto(valor) {
   return String(valor ?? '').trim()
 }
@@ -92,21 +90,4 @@ export function validarCandidato(dados = {}, cargo = null, candidatos = [], idAt
   if (!cargo?.id) erros.cargo_id = 'Selecione o cargo.'
 
   return { ok: Object.keys(erros).length === 0, erros }
-}
-
-export function validarIdentificacao(nome) {
-  const erros = {}
-  const nomeLimpo = nomeExibicao(nome)
-
-  if (!nomeLimpo) {
-    erros.nome = 'Digite seu primeiro nome.'
-  } else if (nomeLimpo.length < 2) {
-    erros.nome = 'O nome informado é muito curto.'
-  }
-
-  return {
-    ok: Object.keys(erros).length === 0,
-    erros,
-    nome: nomeLimpo
-  }
 }

@@ -743,73 +743,24 @@ export async function novaEleicao({ escola_nome, nome, data_eleicao }) {
 /* Votação pública                                                            */
 /* -------------------------------------------------------------------------- */
 
-export async function liberarEleitor(eleicaoId, nome, turma) {
+export async function liberarEleitor(eleicaoId) {
   const estado = carregarEstado()
   const eleicao = estado.eleicoes.find(
     (e) => e.id === eleicaoId && e.status === 'aberta'
   )
   if (!eleicao) throw new Error('A votação não está aberta.')
 
-  const nomeLimpo = String(nome ?? '').trim().replace(/\s+/g, ' ')
-  const turmaLimpa = String(turma ?? '').trim().replace(/\s+/g, ' ')
-  const nomeNorm = normalizarNome(nomeLimpo)
-  const turmaNorm = normalizarTurma(turmaLimpa)
-
-  if (nomeNorm.length < 2) throw new Error('Digite seu primeiro nome.')
-
-  const jaVotou = estado.presencas.some(
-    (p) =>
-      p.eleicao_id === eleicao.id &&
-      p.nome_normalizado === nomeNorm &&
-      p.turma_normalizada === turmaNorm
-  )
-  if (jaVotou) {
-    throw new Error('Este nome já votou nesta eleição.')
-  }
-
-  const agoraMs = Date.now()
-  estado.sessoes.forEach((s) => {
-    if (
-      s.eleicao_id === eleicao.id &&
-      s.nome_normalizado === nomeNorm &&
-      s.turma_normalizada === turmaNorm &&
-      s.status === 'ativa' &&
-      new Date(s.expira_em).getTime() <= agoraMs
-    ) {
-      s.status = 'expirada'
-    }
-  })
-
-  const ativa = estado.sessoes.find(
-    (s) =>
-      s.eleicao_id === eleicao.id &&
-      s.nome_normalizado === nomeNorm &&
-      s.turma_normalizada === turmaNorm &&
-      s.status === 'ativa' &&
-      new Date(s.expira_em).getTime() > agoraMs
-  )
-
-  if (ativa) {
-    const minutos = Math.max(
-      1,
-      Math.ceil((new Date(ativa.expira_em).getTime() - agoraMs) / 60000)
-    )
-    throw new Error(
-      `Já existe uma votação em andamento para este nome e turma. Aguarde ${minutos} minuto(s) ou procure o responsável.`
-    )
-  }
-
   const expiraEm = new Date(
-    agoraMs + (Number(eleicao.tempo_inatividade_segundos) + 60) * 1000
+    Date.now() + (Number(eleicao.tempo_inatividade_segundos) + 60) * 1000
   ).toISOString()
 
   const sessao = {
     id: id(),
     eleicao_id: eleicao.id,
-    nome_eleitor: nomeLimpo,
-    nome_normalizado: nomeNorm,
-    turma: turmaLimpa,
-    turma_normalizada: turmaNorm,
+    nome_eleitor: '',
+    nome_normalizado: '',
+    turma: '',
+    turma_normalizada: '',
     token: tokenAleatorio(),
     status: 'ativa',
     expira_em: expiraEm,
@@ -822,8 +773,8 @@ export async function liberarEleitor(eleicaoId, nome, turma) {
 
   return {
     token: sessao.token,
-    nome: sessao.nome_eleitor,
-    turma: sessao.turma,
+    nome: '',
+    turma: '',
     expira_em: sessao.expira_em
   }
 }
@@ -850,19 +801,6 @@ export async function registrarVoto(token, votos) {
     (e) => e.id === sessao.eleicao_id && e.status === 'aberta'
   )
   if (!eleicao) throw new Error('A votação não está aberta.')
-
-  const presenca = estado.presencas.find(
-    (p) =>
-      p.eleicao_id === eleicao.id &&
-      p.nome_normalizado === sessao.nome_normalizado &&
-      p.turma_normalizada === sessao.turma_normalizada
-  )
-  if (presenca) {
-    sessao.status = 'usada'
-    sessao.usada_em = agora()
-    persistir()
-    return { ok: true, ja_registrado: true }
-  }
 
   validarVotosDaEleicao(estado, eleicao, votos)
 

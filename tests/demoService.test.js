@@ -48,11 +48,23 @@ describe('serviço local de demonstração', () => {
 
     const presencas = await demo.listarPresencas(publico.eleicao.id)
     expect(presencas).toHaveLength(1)
-    expect(presencas[0].nome_eleitor).toBe('João')
+    expect(presencas[0].nome_eleitor).toBe('')
+  })
 
-    await expect(
-      demo.liberarEleitor(publico.eleicao.id, 'joao', '')
-    ).rejects.toThrow('já votou')
+  it('permite iniciar novas votações sem identificação, cada uma com um voto', async () => {
+    const publico = await demo.getEstadoPublico()
+    const cargos = publico.cargos
+    const branco = cargos.map((cargo) => ({ cargo_id: cargo.id, tipo: 'branco', candidato_id: null }))
+
+    const primeira = await demo.liberarEleitor(publico.eleicao.id, '', '')
+    await demo.registrarVoto(primeira.token, branco)
+    const segunda = await demo.liberarEleitor(publico.eleicao.id, '', '')
+    const registro = await demo.registrarVoto(segunda.token, branco)
+
+    expect(registro.ja_registrado).toBeUndefined()
+    expect(registro.protocolo).toBeTruthy()
+    const apuracao = await demo.apurar(publico.eleicao.id, true)
+    expect(apuracao.total_votantes).toBe(2)
   })
 
   it('distingue apuração parcial de apuração oficial', async () => {

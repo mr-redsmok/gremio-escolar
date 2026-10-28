@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   validarCandidato,
   validarCargo,
-  validarEleicao,
-  validarIdentificacao
+  validarEleicao
 } from '@/lib/validators.js'
 
 describe('validação da eleição', () => {
@@ -115,26 +114,5 @@ describe('validação de candidatos', () => {
     expect(
       validarCandidato({ nome: 'Ana', numero: '10' }, cargo, candidatos, 'a1').ok
     ).toBe(true)
-  })
-})
-
-describe('validação da identificação do eleitor', () => {
-  it('normaliza espaços e aceita somente o primeiro nome', () => {
-    const resultado = validarIdentificacao('  Maria   ')
-
-    expect(resultado.ok).toBe(true)
-    expect(resultado.nome).toBe('Maria')
-  })
-
-  it('exige o primeiro nome', () => {
-    const resultado = validarIdentificacao('   ')
-    expect(resultado.ok).toBe(false)
-    expect(resultado.erros.nome).toContain('primeiro nome')
-  })
-
-  it('rejeita um nome de uma letra', () => {
-    const resultado = validarIdentificacao('M')
-    expect(resultado.ok).toBe(false)
-    expect(resultado.erros.nome).toBeTruthy()
   })
 })

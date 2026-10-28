@@ -11,7 +11,7 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push })
 }))
 
-describe('identificação na tela da urna', () => {
+describe('início da votação na tela da urna', () => {
   beforeEach(async () => {
     localStorage.clear()
     sessionStorage.clear()
@@ -21,21 +21,18 @@ describe('identificação na tela da urna', () => {
     push.mockReset()
   })
 
-  it('mostra o erro quando o nome está vazio e avança com o primeiro nome', async () => {
+  it('inicia a votação sem pedir identificação e abre a tela de votação', async () => {
     const wrapper = mount(UrnaView)
     await flushPromises()
 
-    await wrapper.find('form.standby-form').trigger('submit')
+    expect(wrapper.find('input').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Pronto para votar?')
 
-    expect(wrapper.find('.field-error').text()).toContain('primeiro nome')
-    expect(wrapper.text()).toContain('Vamos começar')
+    const botao = wrapper.findAll('button').find((b) => b.text().includes('Iniciar votação'))
+    await botao.trigger('click')
+    await flushPromises()
 
-    await wrapper.find('#eleitor-nome').setValue('  Maria  ')
-    await wrapper.find('form.standby-form').trigger('submit')
-
-    expect(wrapper.text()).toContain('Confirme seus dados')
-    expect(wrapper.find('.confirmacao-dados').text()).toContain('Maria')
-    expect(wrapper.find('#eleitor-turma').exists()).toBe(false)
+    expect(push).toHaveBeenCalledWith({ name: 'votar' })
 
     wrapper.unmount()
   })
